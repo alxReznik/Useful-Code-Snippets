@@ -1,4 +1,23 @@
+
+const Environments = Object.freeze({
+    "https://melave-mo-dev.crm4.dynamics.com": "melave-mo-dev",
+    "https://melave-m0-test.crm4.dynamics.com": "melave-m0-test",
+    "https://melave.crm4.dynamics.com": "melave",
+    "https://melave-edu.crm4.dynamics.com": "melave-edu"
+});
+
+function getCurrentEnvironmentName() {
+    const currentUrl = Xrm.Utility
+        .getGlobalContext()
+        .getClientUrl()
+        .replace(/\/$/, "");
+
+    return Environments[currentUrl] || "Unknown Environment";
+}
+
 async function getUsersByRoleIds() {
+    const environmentName = getCurrentEnvironmentName();
+
     const fetchXml = `
 <fetch version="1.0" mapping="logical" distinct="true">
   <entity name="systemuser">
@@ -35,12 +54,14 @@ async function getUsersByRoleIds() {
 
         const tableData = response.entities.map((user, index) => ({
             "Index": index + 1,
+            "Environment Name": environmentName,
             "Full Name": user.fullname || "",
             "Domain": user.domainname || "",
             "Status": user.isdisabled ? "Disabled" : "Enabled"
         }));
-
+console.log(`Environment: ${environmentName}`);
         console.table(tableData);
+        
         console.log(`Total users found: ${tableData.length}`);
 
         return tableData;
